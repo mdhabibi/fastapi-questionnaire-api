@@ -25,7 +25,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Security
+# Configure HTTP Basic authentication
 security = HTTPBasic()
 
 # User credentials
@@ -35,9 +35,13 @@ users = {
     "clementine": "mandarine"
 }
 
+# Admin password
 admin_password = "4dm1N"
 
-def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
+
+# Dependency function to get the current username
+def get_current_username(credentials:
+                         HTTPBasicCredentials = Depends(security)):
     correct_password = users.get(credentials.username)
     if correct_password is None or correct_password != credentials.password:
         logger.error(f"Authentication failed for user: {credentials.username}")
@@ -49,21 +53,28 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     logger.info(f"User {credentials.username} authenticated successfully")
     return credentials.username
 
+
+# Dependency function to check if the user is an admin
 def is_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    if credentials.username != "admin" or credentials.password != admin_password:
-        logger.error(f"Admin authentication failed for user: {credentials.username}")
+    if (credentials.username != "admin" or
+                                credentials.password != admin_password):
+        logger.error(f"Authentication failed for user: {credentials.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
+            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Basic"},
         )
     logger.info("Admin authenticated successfully")
     return credentials.username
 
+
+# Root endpoint to check API status
 @app.get("/", tags=["home"], summary="Check API status")
 async def read_root():
     return {"message": "API is working"}
 
+
+# Endpoint to get questions based on use, subjects, and number of questions
 @app.get("/questions", tags=["questions"], summary="Get questions")
 async def get_questions(
     use: str,
@@ -71,7 +82,8 @@ async def get_questions(
     subjects: List[str] = Query(...),
     username: str = Depends(get_current_username)
 ):
-    logger.info(f"Received request for questions with use: {use}, num_questions: {num_questions}, subjects: {subjects}")
+    logger.info(f"Received request for questions with use: {use}, "
+                f"num_questions: {num_questions}, subjects: {subjects}")
 
     if num_questions not in [5, 10, 20]:
         logger.error(f"Invalid number of questions: {num_questions}")
@@ -79,7 +91,7 @@ async def get_questions(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Number of questions must be 5, 10, or 20"
         )
-    
+    # Filter the DataFrame based on use and subjects
     try:
         filtered_df = df[(df['use'] == use) & (df['subject'].isin(subjects))]
         logger.info(f"Filtered dataframe: {filtered_df}")
@@ -90,6 +102,7 @@ async def get_questions(
             detail="Internal server error"
         )
 
+    # Check if enough questions are available
     if len(filtered_df) < num_questions:
         logger.error("Not enough questions available")
         raise HTTPException(
@@ -97,9 +110,11 @@ async def get_questions(
             detail="Not enough questions available"
         )
 
+    # Sample questions and handle NaN values
     try:
         questions = filtered_df.sample(num_questions).to_dict(orient='records')
-        questions = [{k: (v if pd.notna(v) else None) for k, v in q.items()} for q in questions]
+        questions = [{k: (v if pd.notna(v) else None) for
+                      k, v in q.items()} for q in questions]
         logger.info(f"Sampled questions: {questions}")
     except Exception as e:
         logger.error(f"Error sampling questions: {e}")
@@ -110,6 +125,8 @@ async def get_questions(
 
     return {"questions": questions}
 
+
+# Pydantic model for question data
 class Question(BaseModel):
     question: str
     subject: str
@@ -121,6 +138,8 @@ class Question(BaseModel):
     responseD: Optional[str] = None
     remark: Optional[str] = None
 
+
+# Endpoint to add a new question (admin only)
 @app.post("/questions", tags=["admin"], summary="Add a new question")
 async def add_question(
     question: Question,
@@ -139,11 +158,13 @@ async def add_question(
         )
     return {"message": "Question added successfully"}
 
+
 # Custom exception class
 class MyException(Exception):
     def __init__(self, name: str, date: str):
         self.name = name
         self.date = date
+
 
 # Custom exception handler
 @app.exception_handler(MyException)
@@ -159,14 +180,18 @@ def my_exception_handler(request: Request, exception: MyException):
         }
     )
 
-@app.get('/my_custom_exception', tags=["errors"], summary="Trigger a custom exception")
+
+# Endpoint to trigger a custom exception
+@app.get('/my_custom_exception', tags=["errors"],
+         summary="Trigger a custom exception")
 def get_my_custom_exception():
     raise MyException(
         name='my error',
         date=str(pd.Timestamp.now())
     )
 
-# Document possible errors
+
+# Endpoint to document possible errors
 responses = {
     200: {"description": "OK"},
     404: {"description": "Item not found"},
@@ -174,9 +199,12 @@ responses = {
     403: {"description": "Not enough privileges"},
 }
 
-@app.get('/thing', responses=responses, tags=["errors"], summary="Get thing with possible errors")
+
+@app.get('/thing', responses=responses, tags=["errors"],
+         summary="Get thing with possible errors")
 def get_thing():
     return {'data': 'hello world'}
+
 
 # Run the server
 if __name__ == '__main__':
