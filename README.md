@@ -1,5 +1,9 @@
 # FastAPI Questionnaire API
 
+<div align="center">
+  <img src="images/poster.png" width="400">
+</div>
+
 ## Overview
 
 This project is a FastAPI application designed to manage and retrieve questionnaire data. It allows users to fetch questions based on specific criteria and add new questions (admin only). The API includes basic authentication for user verification and custom error handling to ensure robustness.
