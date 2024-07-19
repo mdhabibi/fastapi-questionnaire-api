@@ -1,7 +1,7 @@
 # FastAPI Questionnaire API
 
 <div align="center">
-  <img src="images/poster.png" width="400">
+  <img src="images/API1.png" width="400">
 </div>
 
 ## Overview
