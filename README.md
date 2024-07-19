@@ -127,6 +127,15 @@ The API uses basic authentication. The credentials are as follows:
 
 - **admin**: 4dm1N
 
+### Medium Article
+For a detailed walkthrough and explanation of this project, check out the article on Medium:
+
+<div align="center">
+  <a href="https://medium.com/@mhabibi.ds/building-a-robust-questionnaire-api-with-fastapi-de02a07e9f03">
+    <img src="https://cdn.iconscout.com/icon/free/png-256/medium-47-433328.png" width="50" alt="Medium">
+  </a>
+</div>
+
 ## Conclusion
 
 This FastAPI application serves as a robust backend for managing questionnaire data, providing necessary endpoints for retrieving and adding questions while ensuring secure access through authentication. The project can be further extended with more features such as advanced authentication, real database integration, and more endpoints as required.
